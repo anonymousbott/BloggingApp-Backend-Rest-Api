@@ -2,6 +2,7 @@ package com.smk.blog.services.impl;
 
 import java.util.Date;
 import java.util.List;
+import java.util.stream.Collector;
 import java.util.stream.Collectors;
 
 import org.modelmapper.ModelMapper;
@@ -84,8 +85,9 @@ public class PostServiceImpl implements PostService {
 	}
 
 	@Override
-	public PostResponse getAllPosts(Integer pageNumber,Integer pageSize) {
-		Pageable pageable = PageRequest.of(pageNumber, pageSize);
+	public PostResponse getAllPosts(Integer pageNumber,Integer pageSize,String sortBy,String sortDir) {
+		Sort sort = sortDir.equalsIgnoreCase("asc")?Sort.by(sortBy).ascending():Sort.by(sortBy).descending();
+		Pageable pageable = PageRequest.of(pageNumber, pageSize,sort);
 		Page<Post> pagePost = postRepository.findAll(pageable);
 		List<Post> findAllPosts = pagePost.getContent();
 		//List<Post> findAllPosts = postRepository.findAll(pageable)
@@ -123,8 +125,9 @@ public class PostServiceImpl implements PostService {
 
 	@Override
 	public List<PostDto> searchPosts(String keyword) {
-		// TODO Auto-generated method stub
-		return null;
+		List<Post> searchPostByTitle = postRepository.searchByTitle("%"+keyword+"%");
+		List<PostDto> searchPostDtoByTitle = searchPostByTitle.stream().map((post)->modelMapper.map(post, PostDto.class)).collect(Collectors.toList());
+		return searchPostDtoByTitle;
 	}
 
 }
