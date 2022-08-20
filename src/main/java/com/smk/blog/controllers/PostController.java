@@ -1,10 +1,18 @@
 package com.smk.blog.controllers;
 
+import java.io.FileNotFoundException;
+import java.io.IOException;
+import java.io.InputStream;
 import java.util.List;
 
+import javax.servlet.http.HttpServletResponse;
+
+import org.hibernate.engine.jdbc.StreamUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Required;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -15,12 +23,14 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.multipart.MultipartFile;
 
 import com.smk.blog.config.AppConstants;
 import com.smk.blog.payload.ApiResponse;
 import com.smk.blog.payload.PostDto;
 import com.smk.blog.payload.PostResponse;
 import com.smk.blog.repositories.PostRepository;
+import com.smk.blog.services.FileService;
 import com.smk.blog.services.PostService;
 
 @RestController
@@ -29,6 +39,12 @@ public class PostController {
 
 	@Autowired
 	private PostService postService;
+
+	@Autowired
+	private FileService fileService;
+
+	@Value("${project.image}")
+	private String path;
 
 	@PostMapping("/user/{userId}/category/{categoryId}/post")
 	public ResponseEntity<PostDto> createPost(@RequestBody PostDto postDto, @PathVariable Integer userId,
@@ -81,11 +97,33 @@ public class PostController {
 		PostDto updatedPost = postService.updatePost(postDto, postId);
 		return new ResponseEntity<PostDto>(updatedPost, HttpStatus.OK);
 	}
-	
+
 	@GetMapping("/post/search/{keyword}")
-	public ResponseEntity<List<PostDto>> searchPostByTitle(@PathVariable String keyword){
+	public ResponseEntity<List<PostDto>> searchPostByTitle(@PathVariable String keyword) {
 		List<PostDto> searchPosts = postService.searchPosts(keyword);
-		return new ResponseEntity<List<PostDto>>(searchPosts,HttpStatus.OK);
+		return new ResponseEntity<List<PostDto>>(searchPosts, HttpStatus.OK);
+	}
+
+	@GetMapping("/post/image/{postId}")
+	public ResponseEntity<PostDto> uploadImage(@PathVariable Integer postId, @RequestParam("image") MultipartFile image)
+			throws IOException {
+		PostDto postDto = postService.getPost(postId);
+
+		String uploadedImageName = fileService.uploadImage(path, image);
+
+		postDto.setImage(uploadedImageName);
+
+		PostDto updatedPost = postService.updatePost(postDto, postId);
+
+		return new ResponseEntity<PostDto>(updatedPost, HttpStatus.OK);
+
+	}
+
+	@GetMapping(value = "/post/viewimage/{imageName}", produces = MediaType.IMAGE_JPEG_VALUE)
+	public void downloadImage(@PathVariable String imageName, HttpServletResponse response) throws IOException {
+		InputStream resource = fileService.getResource(path, imageName);
+		response.setContentType(MediaType.IMAGE_JPEG_VALUE);
+		StreamUtils.copy(resource, response.getOutputStream());
 	}
 
 }
