@@ -37,4 +37,39 @@ public class GlobalExceptionHandler {
 		
 		return new ResponseEntity<Map<String,String>>(errorMap,HttpStatus.BAD_REQUEST);
 	}
+	
+	@ExceptionHandler(EmailNotFoundException.class)
+	public ResponseEntity<ApiResponse> emailNotFoundExceptionHandler(EmailNotFoundException ex) {
+		String message = ex.getMessage(); 
+		ApiResponse apiResponse = new ApiResponse(message,"false");
+		
+		return new ResponseEntity<ApiResponse>(apiResponse,HttpStatus.NOT_FOUND);
+	}
+	
+	@ExceptionHandler(BearerMissingTokenExceptionOrEmpty.class)
+	public ResponseEntity<ApiResponse> bearerMissingTokenExceptionOrEmptyHandler(BearerMissingTokenExceptionOrEmpty ex){
+		String message = ex.getMessage(); 
+		ApiResponse apiResponse = new ApiResponse(message,"false");
+		
+		return new ResponseEntity<ApiResponse>(apiResponse,HttpStatus.NOT_FOUND);
+	}
+	//InvalidTokenException
+	
+	@ExceptionHandler(InvalidTokenException.class)
+	public ResponseEntity<ApiResponse> InvalidTokenExceptionHandler(InvalidTokenException ex){
+		String message = ex.getMessage(); 
+		ApiResponse apiResponse = new ApiResponse(message,"false");
+		
+		return new ResponseEntity<ApiResponse>(apiResponse,HttpStatus.UNAUTHORIZED);
+	}
+	
+	//ApiException
+	@ExceptionHandler(ApiException.class)
+	public ResponseEntity<ApiResponse> ApiExceptionExceptionHandler(ApiException ex){
+		String message = ex.getMessage(); 
+		ApiResponse apiResponse = new ApiResponse(message,"false");
+		
+		return new ResponseEntity<ApiResponse>(apiResponse,HttpStatus.UNAUTHORIZED);
+	}
+	
 }
